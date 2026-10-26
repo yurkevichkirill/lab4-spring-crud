@@ -1,0 +1,25 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: lab4
+  # Подключение к MySQL. Значения по умолчанию совпадают с docker-compose.yml
+  # (учебные логин/пароль, не секреты); переопределяются переменными окружения.
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:${MYSQL_HOST_PORT:3306}/football?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:football}
+    password: ${DB_PASSWORD:football}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # Flyway: схемой управляют миграции из src/main/resources/db/migration
+  flyway:
+    enabled: true # включает миграцию базы данных Flyway
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  jpa:
+    hibernate:
+      ddl-auto: validate # Hibernate только сверяет сущности со схемой, не меняет её
+    open-in-view: false
+  sql:
+    init:
+      mode: never

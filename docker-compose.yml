@@ -1,0 +1,46 @@
+# Docker Compose: MySQL для ЛР №4 (Flyway) + приложение.
+# Для ЛР №4 достаточно только базы: docker compose up -d mysql
+# (приложение запускается локально: mvn spring-boot:run).
+# Имя compose-проекта lab4-flyway — отдельные контейнеры и том, не пересекаются с ЛР №3.
+name: lab4-flyway
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: "no"
+    # Имена таблиц без учёта регистра: PRODUCT из миграции и product в запросах Hibernate —
+    # одна таблица (на Linux по умолчанию MySQL различает регистр имён таблиц).
+    # Параметр действует только при инициализации нового тома.
+    command: ["--lower-case-table-names=1"]
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: football
+      MYSQL_USER: football
+      MYSQL_PASSWORD: football
+    ports:
+      - "${MYSQL_HOST_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  app:
+    build: .
+    image: lab4-flyway-app
+    restart: on-failure
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/football?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      DB_USERNAME: football
+      DB_PASSWORD: football
+    ports:
+      - "8081:8081"
+
+volumes:
+  mysql_data:
